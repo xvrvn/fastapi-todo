@@ -2,7 +2,7 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from .config import settings
 
-engine = create_engine(settings.DATABASE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=False)
 
 
 def get_session():
@@ -11,6 +11,7 @@ def get_session():
 
 
 def init_db():
-    from .auth import models as auth_models  # noqa: F401
+    import src.auth.models
+    import src.tasks.models  # noqa: F401
 
     SQLModel.metadata.create_all(engine)

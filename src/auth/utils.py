@@ -27,11 +27,10 @@ def create_access_token(
     secret_key: str = None,  # type: ignore
 ):
     to_encode = data.copy()
-    tz = timezone(timedelta(hours=8))
     if expires_delta:
-        expire = datetime.now(tz) + expires_delta
+        expire = datetime.now(tz=timezone.utc) + expires_delta
     else:
-        expire = datetime.now(tz) + timedelta(
+        expire = datetime.now(tz=timezone.utc) + timedelta(
             minutes=auth_settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode.update({"exp": expire})

@@ -1,5 +1,4 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 
 from sqlmodel import Boolean, Column, Field, SQLModel, String
 
@@ -14,6 +13,4 @@ class User(SQLModel, table=True):
     is_active: bool = Field(
         default=True, sa_column=Column("is_active", Boolean, default=True)
     )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(tz=ZoneInfo("Asia/Shanghai"))
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))

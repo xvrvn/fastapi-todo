@@ -25,7 +25,7 @@ def register(
 @router.post("/token", response_model=schemas.Token)
 def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Annotated[Session, Depends()],
+    session: Annotated[Session, Depends(get_session)],
 ):
     user = service.authenticate_user(session, form_data.username, form_data.password)
     if not user:
@@ -47,7 +47,8 @@ def read_current_user(
 # POST /auth/password-reset-request
 @router.post("/password-reset-request")
 def password_reset_request(
-    payload: schemas.PasswordResetRequest, session: Annotated[Session, Depends()]
+    payload: schemas.PasswordResetRequest,
+    session: Annotated[Session, Depends(get_session)],
 ):
     # front-end should provide base url to build link, but to avoid exposing we accept env or fallback
     reset_base = "http://localhost:3000/reset-password"  # front-end page; in prod pass from frontend
@@ -57,7 +58,8 @@ def password_reset_request(
 # POST /auth/password-reset-confirm
 @router.post("/password-reset-confirm")
 def password_reset_confirm(
-    payload: schemas.PasswordResetConfirm, session: Annotated[Session, Depends()]
+    payload: schemas.PasswordResetConfirm,
+    session: Annotated[Session, Depends(get_session)],
 ):
     user = service.reset_password(session, payload.token, payload.new_password)
     return {
