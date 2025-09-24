@@ -1,0 +1,7 @@
+fastapi[standard]==0.117.1
+sqlmodel==0.0.25
+psycopg[binary]==3.2.10
+python-jose==3.5.0
+passlib[bcrypt]==1.7.4
+email-validator==2.3.0
+pydantic-settings==2.10.1
