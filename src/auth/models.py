@@ -1,6 +1,7 @@
+# src/auth/models.py
 from datetime import datetime, timezone
 
-from sqlmodel import Boolean, Column, Field, SQLModel, String
+from sqlmodel import TIMESTAMP, Boolean, Column, Field, SQLModel, String, func
 
 
 class User(SQLModel, table=True):
@@ -11,6 +12,18 @@ class User(SQLModel, table=True):
     )
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(
-        default=True, sa_column=Column("is_active", Boolean, default=True)
+        default=True,
+        sa_column=Column(
+            Boolean,
+            default=True,
+            nullable=False,
+        ),
     )
-    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(
+            TIMESTAMP(timezone=True),
+            server_default=func.now(),
+            nullable=False,
+        ),
+    )

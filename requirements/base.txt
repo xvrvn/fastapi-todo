@@ -1,8 +1,10 @@
-fastapi[standard]==0.117.1
+fastapi[all]==0.117.1
 sqlmodel==0.0.25
-psycopg[binary]==3.2.10
+asyncpg==0.30.0
 python-jose==3.5.0
-passlib[bcrypt]==1.7.4
-email-validator==2.3.0
+passlib[argon2]==1.7.4
 pydantic-settings==2.10.1
 alembic==1.16.5
+aiosmtplib==4.0.2
+fastapi-cache2-fork[redis]==2.2.1
+greenlet==3.2.4

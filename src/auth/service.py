@@ -1,6 +1,8 @@
-from datetime import timedelta
+# src/auth/service.py
+from datetime import datetime, timedelta, timezone
 
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .config import auth_settings
 from .exceptions import BadRequest, UserAlreadyExists, UserNotFound
@@ -15,68 +17,74 @@ from .utils import (
 )
 
 
-# ---- User creation / retrieval ----
-def create_user(session: Session, email: str, password: str) -> User:
-    statement = select(User).where(User.email == email)
-    result = session.exec(statement).first()
-    if result:
+# create user
+async def create_user(session: AsyncSession, email: str, password: str) -> User:
+    q = select(User).where(User.email == email)
+    result = await session.exec(q)
+    if result.first():
         raise UserAlreadyExists
-    hashed = hash_password(password)
-    user = User(email=email, hashed_password=hashed)
+    user = User(
+        email=email,
+        hashed_password=hash_password(password),
+        is_active=True,
+        created_at=datetime.now(timezone.utc),  # offset-aware
+    )
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
     return user
 
 
-def get_user_by_email(session: Session, email: str) -> User | None:
-    statement = select(User).where(User.email == email)
-    return session.exec(statement).first()
+# get by email
+async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
+    q = select(User).where(User.email == email)
+    result = await session.exec(q)
+    return result.first()
 
 
-def authenticate_user(session: Session, email: str, password: str) -> User | None:
-    user = get_user_by_email(session, email)
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
+# authenticate
+async def authenticate_user(
+    session: AsyncSession, email: str, password: str
+) -> User | None:
+    user = await get_user_by_email(session, email)
+    if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
 
-# ---- Token creation ----
+# token creation
 def create_user_token(user: User, expires_minutes: int | None = None) -> str:
-    data = {"sub": user.email}
-    if expires_minutes:
-        return create_access_token(
-            data, expires_delta=timedelta(minutes=expires_minutes)
-        )
-    return create_access_token(data)
+    return create_access_token(
+        {"sub": user.email},
+        expires_delta=timedelta(minutes=expires_minutes) if expires_minutes else None,
+    )
 
 
-# ---- Password reset flow ----
-def send_password_reset_email(session: Session, email: str, reset_base_url: str):
-    user = get_user_by_email(session, email)
+# password reset
+async def send_password_reset_email(
+    session: AsyncSession, email: str, reset_base_url: str
+):
+    user = await get_user_by_email(session, email)
     if not user:
-        # dev
         raise UserNotFound
     token = create_password_reset_token(email)
     link = f"{reset_base_url}?token={token}"
     subject = "Todo App - Password reset"
-    body = f"Hi,\n\nClick the link below to reset your password. The link expires in {auth_settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES if hasattr(auth_settings, 'PASSWORD_RESET_TOKEN_EXPIRE_MINUTES') else 15} minutes.\n\n{link}\n\nIf you didn't ask for this, ignore this email."
-    send_email(subject, email, body)
+    body = f"Hi,\n\nClick the link below to reset your password. The link expires in {auth_settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES} minutes.\n\n{link}\n\nIf you didn't ask for this, ignore this email."
+    await send_email(subject, email, body)
     return {"msg": "reset email sent"}
 
 
-def reset_password(session: Session, token: str, new_password: str):
+async def reset_password(session: AsyncSession, token: str, new_password: str):
     try:
         email = verify_password_reset_token(token)
     except Exception:
         raise BadRequest("Invalid or expired token.") from Exception
-    user = get_user_by_email(session, email)
+    user = await get_user_by_email(session, email)
     if not user:
         raise UserNotFound
     user.hashed_password = hash_password(new_password)
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
     return user

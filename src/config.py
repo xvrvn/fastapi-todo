@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     SMTP_USER: str
     SMTP_PASSWORD: str
     FROM_EMAIL: str
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     model_config = {
         "extra": "forbid",
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
 
 settings = Settings(
     DATABASE_URL=os.getenv(
-        "DATABASE_URL", "postgresql+psycopg://nolos:123456@localhost:5432/tododb"
+        "DATABASE_URL", "postgresql+asyncpg://nolos:123456@localhost:5432/tododb"
     ),
     SECRET_KEY=os.getenv("SECRET_KEY", "your_super_secret_key"),
     ACCESS_TOKEN_EXPIRE_MINUTES=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60)),
@@ -33,4 +34,5 @@ settings = Settings(
     SMTP_USER=os.getenv("SMTP_USER", "user@example.com"),
     SMTP_PASSWORD=os.getenv("SMTP_PASSWORD", "password"),
     FROM_EMAIL=os.getenv("FROM_EMAIL", "noreply@example.com"),
+    REDIS_URL=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
 )

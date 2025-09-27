@@ -1,3 +1,4 @@
+# src/auth/schemas.py
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -11,13 +12,7 @@ class UserRead(BaseModel):
     email: EmailStr
     is_active: bool
 
-    class Config:
-        from_attributes = True
-
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    model_config = {"from_attributes": True}
 
 
 class Token(BaseModel):
@@ -26,7 +21,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    sub: str | None  # email or user id
+    sub: str | None = None
 
 
 class PasswordResetRequest(BaseModel):
